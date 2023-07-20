@@ -12,13 +12,14 @@ import SafariServices
 struct WebView {
     @Environment(\.multilineTextAlignment) var alignment
     @Binding var dynamicHeight: CGFloat
+    @Binding var didFinishLoad: Bool
 
     let html: String
     let conf: Configuration
 
-    init(dynamicHeight: Binding<CGFloat>, html: String, configuration: Configuration) {
+    init(dynamicHeight: Binding<CGFloat>, didFinishLoad: Binding<Bool>, html: String, configuration: Configuration) {
         self._dynamicHeight = dynamicHeight
-
+        self._didFinishLoad = didFinishLoad
         self.html = html
         self.conf = configuration
     }
@@ -100,6 +101,8 @@ extension WebView {
         }
         
         public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            guard !parent.didFinishLoad else { return }
+
             webView.evaluateJavaScript("document.getElementById(\"NuPlay_RichText\").offsetHeight", completionHandler: { (height, _) in
                 DispatchQueue.main.async {
                     if let height = height as? CGFloat {
@@ -111,6 +114,8 @@ extension WebView {
                     }
                 }
             })
+
+            parent.didFinishLoad = true
         }
         
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
